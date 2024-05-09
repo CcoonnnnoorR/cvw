@@ -4,6 +4,8 @@
 `include "BranchPredictorType.vh"
 
 localparam cvw_t P = '{ 
+  DCACHE_REPL:           DCACHE_REPL,
+  ICACHE_REPL:           ICACHE_REPL,
   XLEN :                 XLEN,  
   IEEE754 :              IEEE754, 
   MISA :                 MISA, 

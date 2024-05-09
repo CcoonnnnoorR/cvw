@@ -78,6 +78,8 @@ typedef struct packed {
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 ints per way, 256 bit or more lines
+  int 		DCACHE_REPL;
+  int		ICACHE_REPL;
   int           DCACHE_NUMWAYS;
   int           DCACHE_WAYSIZEINBYTES;
   int           DCACHE_LINELENINBITS;

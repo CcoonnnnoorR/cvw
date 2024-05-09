@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cache import cvw::*; #(parameter cvw_t P,
-                              parameter PA_BITS, XLEN, LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
+                              parameter PA_BITS, XLEN, LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE, CACHE_REPLACE) (
   input  logic                   clk,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
@@ -126,10 +126,20 @@ module cache import cvw::*; #(parameter cvw_t P,
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
-    cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
-      .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetData, .CacheSetTag, .LRUWriteEn,
-      .SetValid, .ClearValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
-  end else 
+
+ 	if(CACHE_REPLACE==0) begin:cacheLRU
+        cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
+        .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetData, .CacheSetTag, .LRUWriteEn,
+        .SetValid, .ClearValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
+	end else
+
+		if(CACHE_REPLACE==1)begin:cacheRand
+		cacheRand #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheRand(
+		.clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetData,
+	        .CacheSetTag, .LRUWriteEn, .SetValid, .ClearValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
+		end
+		
+end else
     assign VictimWay = 1'b1; // one hot.
 
   assign Hit = |HitWay;
@@ -166,6 +176,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
+
   if(!READ_ONLY_CACHE) begin:WriteSelLogic
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
 
@@ -232,4 +243,24 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CMOpM, .CacheEn, .LRUWriteEn);
+endmodule
+/*
+module LSFR(input logic qa, qb, qc, qd, enable_a, enable_b, enable_c, enable_d, clk, reset,
+	    output logic [3:0] q);
+	
+	assign q[0] = qa;
+	assign q[1] = qb;
+	assign q[2] = qc;
+	assign q[3] = qd;
+	
+	flopenr #(1) fla(clk, reset, enable_a, xor_out, q[0]);
+	flopenr #(1) flb(clk, reset, enable_b, q[0], q[1]);
+	flopenr #(1) flc(clk, reset, enable_c, q[1], q[2]);
+	flopenr #(1) fld(clk, reset, enable_d, q[2], q[3]);
+	
+	logic xor_out;
+		
+	xor x1(xor_out, qa, qd);	    
+      
 endmodule 
+*/

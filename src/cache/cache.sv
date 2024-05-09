@@ -226,9 +226,10 @@ end else
     assign FlushWayFlag = FlushWay[NUMWAYS-1];
   end // block: flushlogic
   else begin:flushlogic // I$ is never flushed because it is never dirty
-    assign FlushWay = 0;
-    assign FlushWayFlag = 0;
-    assign FlushAdrFlag = 0;
+    assign FlushWay = '0;
+    assign FlushWayFlag = 1'b0;
+    assign FlushAdrFlag = 1'b0;
+    assign FlushAdr = '0;
   end
    
   /////////////////////////////////////////////////////////////////////////////////////////////
